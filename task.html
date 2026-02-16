@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en" id="main-html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Warrior Tasks Pro | Adamhgr</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --premium-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+
+        .dark-theme {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border: #334155;
+        }
+
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg); overflow: hidden; position: fixed;
+            font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.5s;
+        }
+
+        #alarm-screen {
+            position: fixed; inset: 0; background: var(--primary); z-index: 30000;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            color: white; text-align: center; padding: 20px;
+        }
+        .alarm-btn { 
+            background: white; color: var(--primary); border: none; padding: 15px 40px; 
+            border-radius: 20px; font-weight: 900; margin-top: 25px; cursor: pointer;
+        }
+
+        #app-notification {
+            position: fixed; top: -100px; left: 20px; right: 20px;
+            background: var(--warning); color: white; padding: 15px 20px;
+            border-radius: 20px; z-index: 11000; display: flex; align-items: center;
+            gap: 12px; box-shadow: 0 15px 30px rgba(245, 158, 11, 0.3);
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 700; font-size: 14px;
+        }
+        #app-notification.show { top: 60px; }
+
+        #welcome-screen {
+            position: fixed; inset: 0; background: var(--bg); z-index: 10000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 40px;
+        }
+
+        .welcome-logo { font-size: 80px; margin-bottom: 20px; filter: drop-shadow(0 10px 15px rgba(99,102,241,0.3)); }
+        .btn-start { background: var(--primary); color: white; border: none; padding: 18px 60px; border-radius: 22px; font-size: 18px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(99,102,241,0.4); }
+
+        #premium-page {
+            position: fixed; inset: 0; background: var(--premium-gradient);
+            z-index: 5000; display: none; flex-direction: column; color: white;
+            padding: 40px 25px; text-align: center; overflow-y: auto;
+        }
+
+        .premium-card {
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);
+            border-radius: 35px; border: 1px solid rgba(255,255,255,0.2);
+            padding: 30px; margin-top: 30px; box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .app-shell { height: 100vh; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); }
+
+        .filter-wrapper { display: flex; gap: 10px; overflow-x: auto; padding: 10px 20px; scrollbar-width: none; }
+        .chip { padding: 8px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; font-size: 12px; font-weight: 700; color: var(--text-sub); white-space: nowrap; transition: 0.3s; cursor: pointer; }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.1); }
+
+        .progress-container { 
+            background: linear-gradient(135deg, #818cf8, #6366f1); padding: 22px; 
+            border-radius: 28px; color: white; margin: 0 20px 20px; 
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .progress-bar-bg { background: rgba(255,255,255,0.2); height: 10px; border-radius: 10px; margin-top: 15px; overflow: hidden; }
+        .progress-fill { background: white; height: 100%; border-radius: 10px; transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); width: 0%; }
+
+        .task-card { 
+            background: var(--card); border-radius: 24px; padding: 20px; 
+            margin: 0 20px 14px; display: flex; justify-content: space-between; 
+            align-items: center; border: 1px solid var(--border); 
+            transition: 0.3s;
+        }
+        .cat-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--primary); letter-spacing: 1px; margin-bottom: 5px; display: inline-block; }
+        .task-note { font-size: 12px; color: var(--text-sub); margin-top: 4px; font-style: italic; opacity: 0.8; }
+
+        .nav { 
+            position: fixed; bottom: 0; width: 100%; height: 90px; 
+            background: var(--card); border-top: 1px solid var(--border); 
+            display: flex; justify-content: space-around; align-items: center; 
+            padding-bottom: env(safe-area-inset-bottom); z-index: 1000;
+        }
+        .nav-item { text-align: center; color: var(--text-sub); font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); transform: translateY(-5px); }
+
+        .modal { 
+            display: none; position: fixed; inset: 0; 
+            background: rgba(0,0,0,0.6); z-index: 2000; 
+            align-items: flex-end; backdrop-filter: blur(8px);
+        }
+        .modal-content { 
+            background: var(--card); width: 100%; padding: 35px; 
+            border-radius: 40px 40px 0 0; box-sizing: border-box; 
+            color: var(--text-main);
+        }
+
+        input, select, textarea { 
+            width: 100%; padding: 18px; border-radius: 20px; 
+            border: 1px solid var(--border); background: var(--bg); 
+            color: var(--text-main); font-family: inherit; margin-top: 10px; 
+            outline: none; transition: 0.3s; resize: none;
+        }
+
+        .fab { 
+            position: fixed; right: 25px; bottom: 120px; width: 68px; height: 68px; 
+            background: var(--primary); border-radius: 25px; display: flex; 
+            justify-content: center; align-items: center; color: white; 
+            font-size: 35px; box-shadow: 0 15px 35px rgba(99,102,241,0.4); 
+            z-index: 900; border: none; cursor: pointer;
+        }
+
+        #success-anim { 
+            position: fixed; top: 15%; left: 50%; transform: translateX(-50%); 
+            background: var(--success); color: white; padding: 15px 30px; 
+            border-radius: 50px; font-weight: 800; z-index: 9999; display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="alarm-screen" class="animate__animated">
+        <div style="font-size: 80px;">⏰</div>
+        <h1 id="alarm-title" style="margin: 10px 0;">Mission Time!</h1>
+        <p id="alarm-desc" style="font-size: 18px; opacity: 0.9;">Take action now.</p>
+        <button class="alarm-btn" onclick="dismissAlarm()">I'M ON IT!</button>
+    </div>
+
+    <div id="app-notification">
+        <span>⚠️</span>
+        <span id="notif-text">Quest starting soon!</span>
+    </div>
+
+    <div id="welcome-screen">
+        <div class="welcome-logo animate__animated animate__bounceIn">⚔️</div>
+        <h1 class="animate__animated animate__fadeInUp" style="font-size: 38px; font-weight: 900; margin: 0;">WARRIOR PRO</h1>
+        <p class="animate__animated animate__fadeInUp animate__delay-1s" style="color: var(--text-sub); margin-bottom: 40px;">Designed by Adamhgr</p>
+        <button class="btn-start animate__animated animate__zoomIn animate__delay-2s" onclick="startApp()">BEGIN MISSION</button>
+    </div>
+
+    <div id="premium-page" class="animate__animated">
+        <div style="text-align: right;"><button onclick="togglePremium(false)" style="background:none; border:none; color:white; font-size:40px;">&times;</button></div>
+        <div class="animate__animated animate__pulse animate__infinite" style="font-size: 80px;">👑</div>
+        <h1 style="font-size: 40px; font-weight: 900; margin-top: 10px;">Warrior Elite</h1>
+        <div class="premium-card animate__animated animate__fadeInUp">
+            <p style="font-weight: 600;">Contact Adamhgr for Lifetime Access</p>
+            <button onclick="alert('Contact Adamhgr: 01062809046')" style="width: 100%; background: white; color: #4f46e5; border: none; padding: 20px; border-radius: 20px; font-weight: 900; cursor: pointer; margin-top: 10px;">UPGRADE NOW</button>
+        </div>
+    </div>
+
+    <div id="success-anim">🔥 MISSION ACCOMPLISHED!</div>
+
+    <div class="app-shell" id="app-content" style="display:none;">
+        <header style="padding: 35px 25px 15px;" class="animate__animated animate__fadeInDown">
+            <span style="color: var(--primary); font-weight: 800; font-size: 11px; letter-spacing: 3px;">WARRIOR MODE</span>
+            <h1 style="margin:0; font-size: 34px; font-weight: 900; color: var(--text-main);">Daily Quests</h1>
+        </header>
+
+        <div class="filter-wrapper animate__animated animate__fadeInRight">
+            <div class="chip active" onclick="filterTasks('All', this)">All</div>
+            <div class="chip" onclick="filterTasks('Shopping', this)">Shopping 🛒</div>
+            <div class="chip" onclick="filterTasks('Work', this)">Work</div>
+            <div class="chip" onclick="filterTasks('Health', this)">Health</div>
+            <div class="chip" onclick="filterTasks('Study', this)">Study</div>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; padding-bottom: 120px;">
+            <div class="progress-container animate__animated animate__zoomIn">
+                <div style="display:flex; justify-content:space-between; font-weight: 900;">
+                    <span>Conquest Progress</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar-bg"><div id="progress-fill" class="progress-fill"></div></div>
+            </div>
+            
+            <div id="task-list"></div>
+        </div>
+
+        <button class="fab animate__animated animate__bounceInUp" onclick="showModal('addModal')">＋</button>
+
+        <nav class="nav">
+            <div class="nav-item active" onclick="location.reload()">🏠<br>Home</div>
+            <div class="nav-item" onclick="togglePremium(true)">💎<br>Premium</div>
+            <div class="nav-item" onclick="showModal('settingsModal')">⚙️<br>Settings</div>
+        </nav>
+    </div>
+
+    <div id="addModal" class="modal" onclick="if(event.target == this) hideModals()">
+        <div class="modal-content animate__animated animate__slideInUp">
+            <h2 style="margin:0; font-weight:900;">Add Quest</h2>
+            <input type="text" id="taskInput" placeholder="What is your mission?">
+            <textarea id="taskNote" placeholder="Add a small note (optional)..." rows="2"></textarea>
+            
+            <div style="display:flex; gap:10px; margin-top: 10px;">
+                <input type="date" id="taskDate" style="flex:1">
+                <input type="time" id="taskTime" style="flex:1">
+            </div>
+            <select id="taskCat">
+                <option value="General">General</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Work">Work</option>
+                <option value="Health">Health</option>
+                <option value="Study">Study</option>
+            </select>
+            <button onclick="addTask()" style="background:var(--primary); color:white; width:100%; padding:20px; border:none; border-radius:22px; font-weight:900; margin-top:25px; cursor:pointer;">START QUEST</button>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal" onclick="if(event.target == this) hideModals()">
+        <div class="modal-content animate__animated animate__slideInUp">
+            <h2 style="margin-bottom:20px;">Settings</h2>
+            <button onclick="toggleDark()" style="width:100%; padding:18px; border-radius:18px; border:1px solid var(--border); background:var(--bg); color:var(--text-main); font-weight:800; margin-bottom: 15px;">Toggle Dark Mode</button>
+            <button onclick="resetData()" style="width:100%; background:var(--danger); color:white; padding:18px; border-radius:18px; border:none; font-weight:800;">Wipe All Data</button>
+        </div>
+    </div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('warrior_tasks_v6')) || [];
+        let notifiedTasks = [];
+        let alarmAudio = null;
+        let currentFilter = 'All'; // متغير لتخزين الفلتر الحالي
+
+        function playSound(type) {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            
+            if(type === 'victory') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+            } else if(type === 'alarm') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                return {osc, gain, ctx};
+            } else {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.2);
+            }
+            
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+            osc.start(); osc.stop(ctx.currentTime + 0.4);
+        }
+
+        function triggerRealAlarm(task) {
+            const screen = document.getElementById('alarm-screen');
+            document.getElementById('alarm-title').innerText = task.text;
+            document.getElementById('alarm-desc').innerText = task.note || "Mission starts now!";
+            screen.style.display = 'flex';
+            screen.className = 'animate__animated animate__fadeIn';
+            
+            alarmAudio = playSound('alarm');
+            alarmAudio.osc.start();
+
+            setTimeout(() => { if(alarmAudio) { dismissAlarm(); } }, 5000);
+        }
+
+        function dismissAlarm() {
+            if(alarmAudio) {
+                alarmAudio.osc.stop();
+                alarmAudio.ctx.close();
+                alarmAudio = null;
+            }
+            const screen = document.getElementById('alarm-screen');
+            screen.className = 'animate__animated animate__fadeOut';
+            setTimeout(() => screen.style.display = 'none', 500);
+        }
+
+        function checkDeadlines() {
+            const now = new Date();
+            const currentHour = now.getHours().toString().padStart(2, '0');
+            const currentMin = now.getMinutes().toString().padStart(2, '0');
+            const currentTimeStr = `${currentHour}:${currentMin}`;
+            const currentDateStr = now.toISOString().split('T')[0];
+
+            tasks.forEach(t => {
+                if(t.done || !t.date || !t.time) return;
+                const [year, month, day] = t.date.split('-');
+                const [hours, mins] = t.time.split(':');
+                const taskDate = new Date(year, month - 1, day, hours, mins);
+                const diffMs = taskDate - now;
+                const diffMins = Math.floor(diffMs / 60000);
+
+                if(diffMins <= 60 && diffMins > 0 && !notifiedTasks.includes(t.id + '_pre')) {
+                    showAppNotification(`Get ready! "${t.text}" starts in ${diffMins} mins.`);
+                    notifiedTasks.push(t.id + '_pre');
+                    playSound('alert');
+                }
+                if(t.date === currentDateStr && t.time === currentTimeStr && !notifiedTasks.includes(t.id + '_now')) {
+                    triggerRealAlarm(t);
+                    notifiedTasks.push(t.id + '_now');
+                }
+            });
+        }
+
+        function showAppNotification(msg) {
+            const el = document.getElementById('app-notification');
+            document.getElementById('notif-text').innerText = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 6000);
+        }
+
+        setInterval(checkDeadlines, 5000); 
+
+        function startApp() {
+            const screen = document.getElementById('welcome-screen');
+            screen.classList.add('animate__animated', 'animate__fadeOut');
+            setTimeout(() => { 
+                screen.style.display = 'none'; 
+                document.getElementById('app-content').style.display = 'flex'; 
+                render();
+            }, 600);
+        }
+
+        function togglePremium(show) {
+            const page = document.getElementById('premium-page');
+            if(show) { page.style.display = 'flex'; page.className = 'animate__animated animate__fadeInUp'; }
+            else { page.className = 'animate__animated animate__fadeOutDown'; setTimeout(() => page.style.display = 'none', 500); }
+        }
+
+        function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function hideModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+
+        function toggleDark() {
+            document.getElementById('main-html').classList.toggle('dark-theme');
+            hideModals();
+        }
+
+        function resetData() {
+            if(confirm("Wipe all missions?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // --- وظيفة الفلترة الجديدة ---
+        function filterTasks(category, el) {
+            currentFilter = category;
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            render();
+        }
+
+        function addTask() {
+            const val = document.getElementById('taskInput').value;
+            if(!val) return;
+            tasks.unshift({
+                id: Date.now(),
+                text: val,
+                note: document.getElementById('taskNote').value,
+                date: document.getElementById('taskDate').value,
+                time: document.getElementById('taskTime').value,
+                cat: document.getElementById('taskCat').value,
+                done: false
+            });
+            document.getElementById('taskInput').value = '';
+            document.getElementById('taskNote').value = '';
+            hideModals();
+            render();
+        }
+
+        function completeTask(id) {
+            const idx = tasks.findIndex(t => t.id === id);
+            tasks[idx].done = true;
+            playSound('victory');
+            const anim = document.getElementById('success-anim');
+            anim.style.display = 'block';
+            anim.className = 'animate__animated animate__bounceInDown';
+            setTimeout(() => {
+                anim.classList.replace('animate__bounceInDown', 'animate__fadeOutUp');
+                setTimeout(() => anim.style.display = 'none', 500);
+            }, 1000);
+            render();
+        }
+
+        function deleteTask(id, el) {
+            el.closest('.task-card').classList.add('animate__animated', 'animate__zoomOut');
+            setTimeout(() => { tasks = tasks.filter(t => t.id !== id); render(); }, 300);
+        }
+
+        function render() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            
+            // فلترة المهام بناءً على الفلتر المختار
+            const filtered = tasks.filter(t => currentFilter === 'All' || t.cat === currentFilter);
+
+            filtered.forEach(t => {
+                list.innerHTML += `
+                    <div class="task-card animate__animated animate__fadeInLeft">
+                        <div style="flex:1">
+                            <span class="cat-tag">${t.cat}</span>
+                            <div style="font-weight:800; font-size:17px; ${t.done ? 'text-decoration:line-through; opacity:0.4;' : ''}">${t.text}</div>
+                            ${t.note ? `<div class="task-note">${t.note}</div>` : ''}
+                            <div style="font-size:11px; color:var(--text-sub); margin-top:5px; font-weight:700;">📅 ${t.date || 'No Date'} • ⏰ ${t.time || '--:--'}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap: 10px;">
+                            ${!t.done ? `<button onclick="completeTask(${t.id})" style="background:var(--success); color:white; border:none; padding:10px 18px; border-radius:12px; font-weight:800; cursor:pointer;">Done</button>` : '⭐'}
+                            <button onclick="deleteTask(${t.id}, this)" style="background:none; border:none; color:var(--danger); font-size:24px; cursor:pointer;">&times;</button>
+                        </div>
+                    </div>`;
+            });
+
+            const totalDone = tasks.filter(t => t.done).length;
+            const percent = tasks.length ? Math.round((totalDone/tasks.length)*100) : 0;
+            document.getElementById('progress-percent').innerText = percent + '%';
+            document.getElementById('progress-fill').style.width = percent + '%';
+            localStorage.setItem('warrior_tasks_v6', JSON.stringify(tasks));
+        }
+
+        window.onload = render;
+    </script>
+</body>
+</html>
